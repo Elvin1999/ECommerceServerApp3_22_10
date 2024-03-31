@@ -21,17 +21,17 @@ namespace App.UI
         static byte[] buffer = new byte[BUFFER_SIZE];
         static void Main(string[] args)
         {
-             Console.Title = "Server App";
-             Console.WriteLine(GetAllServicesAsText());
-             SetupServer();
-           
-             Console.ReadLine();
+            Console.Title = "Server App";
+            Console.WriteLine(GetAllServicesAsText());
+            SetupServer();
+
+            Console.ReadLine();
         }
         public static async void TestCall()
         {
 
-            ProductService p=new ProductService();
-            var r =await p.GetAll();
+            ProductService p = new ProductService();
+            var r = await p.GetAll();
             var s = 10;
         }
         private static void SetupServer()
@@ -64,11 +64,11 @@ namespace App.UI
 
         private static async void ReceiveCallback(IAsyncResult ar)
         {
-            Socket current=(Socket)ar.AsyncState;
+            Socket current = (Socket)ar.AsyncState;
             int received;
             try
             {
-                received=current.EndReceive(ar);
+                received = current.EndReceive(ar);
             }
             catch (Exception)
             {
@@ -79,9 +79,9 @@ namespace App.UI
             }
 
             byte[] recBuf = new byte[received];
-            Array.Copy(buffer,recBuf,received);
-            string msg=Encoding.ASCII.GetString(recBuf);
-            Console.WriteLine("Received Request : "+msg);
+            Array.Copy(buffer, recBuf, received);
+            string msg = Encoding.ASCII.GetString(recBuf);
+            Console.WriteLine("Received Request : " + msg);
 
             if (msg.ToLower() == "exit")
             {
@@ -91,11 +91,11 @@ namespace App.UI
                 Console.WriteLine("Client disconnected");
                 return;
             }
-            else if(!String.IsNullOrEmpty(msg))
+            else if (!String.IsNullOrEmpty(msg))
             {
                 try
                 {
-                    var result = msg.Split(new [] { ' ' }, 2);
+                    var result = msg.Split(new[] { ' ' }, 2);
                     if (result.Length >= 2)
                     {
                         var jsonPart = result[1];
@@ -117,7 +117,7 @@ namespace App.UI
                         MethodInfo myMethod = methods.FirstOrDefault(m => m.Name == methodName);
 
                         object myInstance = Activator.CreateInstance(myType);
-                        myMethod.Invoke(myInstance, new object[] { obj }); 
+                        myMethod.Invoke(myInstance, new object[] { obj });
 
 
                     }
@@ -128,14 +128,14 @@ namespace App.UI
                         var methodName = result[1];
 
                         var myType = Assembly.GetAssembly(typeof(ProductService)).GetTypes()
-                            .FirstOrDefault(t => t.Name==className+"Service");
+                            .FirstOrDefault(t => t.Name == className + "Service");
 
-                        if (myType!=null)
+                        if (myType != null)
                         {
                             var methods = myType.GetMethods();
-                            MethodInfo myMethod=methods.FirstOrDefault(m=>m.Name==methodName);
+                            MethodInfo myMethod = methods.FirstOrDefault(m => m.Name == methodName);
 
-                            object myInstance=Activator.CreateInstance(myType);
+                            object myInstance = Activator.CreateInstance(myType);
 
                             object param = null;
                             var jsonString = String.Empty;
@@ -146,13 +146,13 @@ namespace App.UI
                                 param = int.Parse(result[2]);
                                 objectResponse = myMethod.Invoke(myInstance, new object[] { param });
                             }
-                            else if(result.Length<=2)
+                            else if (result.Length <= 2)
                             {
-                                objectResponse=myMethod.Invoke(myInstance, null);
+                                objectResponse = myMethod.Invoke(myInstance, null);
                             }
-                   
-                            jsonString=JsonConvert.SerializeObject(objectResponse);
-                            byte[]data=Encoding.ASCII.GetBytes(jsonString);
+
+                            jsonString = JsonConvert.SerializeObject(objectResponse);
+                            byte[] data = Encoding.ASCII.GetBytes(jsonString);
                             current.Send(data);
                         }
 
@@ -190,15 +190,27 @@ namespace App.UI
                 {
                     string responseText = $@"{className}\{m.Name}";
                     var parameters = m.GetParameters();
-                    foreach (var param in parameters)
+                    if (parameters.Length >= 2)
                     {
-                        if (param.ParameterType != typeof(string) && param.ParameterType.IsClass)
+                        responseText += "?";
+                        foreach (var param in parameters)
                         {
-                            responseText += $@" {param.Name}[json]";
+                            responseText += $@"{param.Name}&";
                         }
-                        else
+                        responseText=responseText.Remove(responseText.Length - 1);
+                    }
+                    else
+                    {
+                        foreach (var param in parameters)
                         {
-                            responseText += $@"\{param.Name}";
+                            if (param.ParameterType != typeof(string) && param.ParameterType.IsClass)
+                            {
+                                responseText += $@" {param.Name}[json]";
+                            }
+                            else
+                            {
+                                responseText += $@"\{param.Name}";
+                            }
                         }
                     }
                     sb.AppendLine(responseText);

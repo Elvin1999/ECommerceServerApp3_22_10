@@ -10,6 +10,7 @@ namespace App.Business.Abstract
     public interface IProductService
     {
         Task<List<Product>> GetAll();
+        Task<List<Product>> GetAllByFilter(decimal price,short stock);
         Task<List<Product>> GetByCategory(int categoryId);
         Task Add(Product product);
         Task Update(Product product);

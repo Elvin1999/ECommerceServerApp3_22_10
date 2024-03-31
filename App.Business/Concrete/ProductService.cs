@@ -53,5 +53,10 @@ namespace App.Business.Concrete
         {
             await _productDal.Update(product);
         }
+
+        public async Task<List<Product>> GetAllByFilter(decimal price, short stock)
+        {
+            return await _productDal.GetList(p=> p.UnitPrice >= price && p.UnitsInStock >= stock);
+        }
     }
 }
